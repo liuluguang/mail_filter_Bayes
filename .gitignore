@@ -1,0 +1,4 @@
+*.txt
+/train
+/testing
+/__pycache__
