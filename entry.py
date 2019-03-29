@@ -30,12 +30,15 @@ def generate_file(ham_dic, spam_dic, smooth, path):
     for word in sorted(vocabulary):
         word_in_ham_smooth = ham_dic.get(word,0) + smooth
         word_in_spam_smooth = spam_dic.get(word, 0) + smooth
+        word_prob_ham = word_in_ham_smooth/total_count_ham_smooth
+        word_prob_spam = word_in_spam_smooth/total_count_spam_smooth
+
 
         line = str(i) + "  "+ word +"  " + str(word_in_ham_smooth) + "  " \
-               + str(word_in_ham_smooth/total_count_ham_smooth) + "  "\
-               + str(word_in_spam_smooth) + "  "+str(word_in_spam_smooth/total_count_spam_smooth) +'\n'
-        w = Word(word, word_in_ham_smooth, word_in_ham_smooth/total_count_ham_smooth,
-                 word_in_spam_smooth, word_in_spam_smooth/total_count_spam_smooth)
+               + str(word_prob_ham) + "  "\
+               + str(word_in_spam_smooth) + "  "+str(word_prob_spam) +'\n'
+        w = Word(word, word_in_ham_smooth, word_prob_ham,
+                 word_in_spam_smooth, word_prob_spam)
         lines.append(line)
         file.write(line)
         model[word] = w
@@ -112,8 +115,8 @@ def calculate_score(word):
     w = model.get(word,-1)
     if w == -1:
         return 0,0
-    score_ham = score_ham + math.log10(w.prob_ham)
-    score_spam = score_spam + math.log10(w.prob_spam)
+    score_ham =  math.log10(w.prob_ham)
+    score_spam = math.log10(w.prob_spam)
     return score_ham, score_spam
 
 
@@ -130,6 +133,7 @@ def training(path):
     count_of_spam_files = 0
     files = os.listdir(path)
     for file in files:
+        # print("file ...")
         if 'ham' in file:
             trainning_ham(path+'/'+file)
             count_of_ham_files = count_of_ham_files + 1
@@ -137,7 +141,9 @@ def training(path):
             trainning_spam(path+'/'+file)
             count_of_spam_files = count_of_spam_files + 1
     prob_ham = count_of_ham_files / (count_of_ham_files + count_of_spam_files)
+
     prob_spam = count_of_spam_files / (count_of_ham_files + count_of_spam_files)
+
 
 def testing(path):
 
@@ -160,7 +166,6 @@ def testing(path):
         print(string)
         output.write(string)
         i = i + 1
-
 
 
 
