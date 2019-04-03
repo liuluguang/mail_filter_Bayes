@@ -32,10 +32,12 @@ filter_mode = 0
 
 def change_vocabulary(mode):
     global vocabulary
+    global training_ham_dict
+    global training_spam_dict
 
     if mode == '1':
         for word in vocabulary:
-            if total_dict.get(word,0) == 1:
+            if total_dict.get(word,0) == 1 :
                 removed_vocabulary.add(word)
     elif mode == '2':
         for word in vocabulary:
@@ -190,8 +192,12 @@ def testing_file(file,mode):
     score_ham = 0.0
     score_spam = 0.0
     with open(file, encoding='latin-1') as f:
+        score_ham = math.log10(prob_ham)
+        score_spam = math.log10(prob_spam)
         for line in f:
             res = re.split('[^a-zA-Z]',line)
+
+
             for word in res:
                 if word == '' or word == ' ':
                     continue
@@ -202,8 +208,21 @@ def testing_file(file,mode):
                     continue
                 words_in_file.append(word)
                 s_ham, s_spam = calculate_score(word)
-                score_ham = score_ham + s_ham
-                score_spam = score_spam + s_spam
+
+                if math.isinf(s_ham) is True:
+                    score_ham = -math.inf
+                else:
+                    if math.isinf(score_ham) is False:
+                        score_ham = score_ham + s_ham
+
+                if math.isinf(s_spam) is True:
+                    score_spam = -math.inf
+                else:
+                    if math.isinf(score_spam) is False:
+                        score_spam = score_spam + s_spam
+
+
+
 
     return score_ham, score_spam
 
@@ -212,8 +231,16 @@ def calculate_score(word):
     w = model.get(word,-1)
     if w == -1:
         return 0,0
-    score_ham =  math.log10(w.prob_ham)
-    score_spam = math.log10(w.prob_spam)
+    try:
+        score_ham =  math.log10(w.prob_ham)
+    except:
+        score_ham = -math.inf
+
+    try:
+        score_spam = math.log10(w.prob_spam)
+    except:
+        score_spam = -math.inf
+
     return score_ham, score_spam
 
 
@@ -325,7 +352,7 @@ def testing(path, mode, test_mode):
 
 
 filter_mode = input("Please choose running mode. 1. normal 2. Stop words filter 3. Length filter 4. Test 5. Test2")
-
+test_mode = ""
 if filter_mode is '2':
     init_stop_word_vocabulary('English-Stop-Words.txt')
 elif filter_mode == '4':
@@ -365,9 +392,14 @@ elif filter_mode == '4':
         removed_vocabulary.clear()
         training_spam_dict = origin_spam_dict.copy()
         training_ham_dict = origin_ham_dict.copy()
-        #recover
 
-    print(res_list)
+
+        #recover
+    for result in res_list:
+        print("Result: ")
+        for item in result:
+            print(item)
+
 
 
     x = [0.05,0.10,0.15,0.20,0.25]
@@ -423,7 +455,7 @@ elif filter_mode == '5':
     origin_ham_dict = training_ham_dict.copy()
     origin_spam_dict = training_spam_dict.copy()
     res_list = list()
-    array = numpy.arange(0.1, 1.1, 0.1)
+    array = numpy.arange(0.0, 1.1, 0.1)
 
     for i in array:
         test_mode = str(i)
@@ -460,7 +492,9 @@ elif filter_mode == '5':
             name = "3." + "Recall for SPAM"
             plt.ylabel("Recall for SPAM")
         y = [res_list[0][i], res_list[1][i], res_list[2][i], res_list[3][i], res_list[4][i], res_list[5][i],
-             res_list[6][i], res_list[7][i], res_list[8][i], res_list[9][i]]
+             res_list[6][i], res_list[7][i], res_list[8][i], res_list[9][i], res_list[10][i]]
         plt.plot(x, y)
         plt.savefig(name + ".png")
+
+
 
