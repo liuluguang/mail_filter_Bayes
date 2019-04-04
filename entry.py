@@ -30,6 +30,37 @@ stop_words_vocabulary = set()
 filter_mode = 0
 
 
+
+def change_vocabulary_demo(condition,value):
+    global vocabulary
+    global training_ham_dict
+    global training_spam_dict
+
+    if condition is '>=':
+        for word in vocabulary:
+            if total_dict.get(word,0) >= value[0]:
+                removed_vocabulary.add(word)
+    elif condition is '<=':
+        for word in vocabulary:
+            if total_dict.get(word,0) <= value[0]:
+                removed_vocabulary.add(word)
+    elif condition is '=':
+        for word in vocabulary:
+            if total_dict.get(word,0) == value[0] :
+                removed_vocabulary.add(word)
+    if condition is '>=,<=':
+        for word in vocabulary:
+            if total_dict.get(word,0) >= value[0] and total_dict.get(word,0) <= value[1] :
+                removed_vocabulary.add(word)
+
+    vocabulary = vocabulary - removed_vocabulary
+    for word in removed_vocabulary:
+        if word in training_ham_dict:
+            training_ham_dict.pop(word)
+        if word in training_spam_dict:
+            training_spam_dict.pop(word)
+
+
 def change_vocabulary(mode):
     global vocabulary
     global training_ham_dict
@@ -343,7 +374,9 @@ def testing(path, mode, test_mode):
     else:
         precision_spam = real_spam_count / model_spam_count
 
-    return accuracy, precision_ham, recall_ham, precision_spam, recall_spam
+    f_measure_ham = (2*recall_ham*precision_ham)/(precision_ham+recall_ham)
+    f_measure_spam = (2 * recall_spam * precision_spam) / (precision_spam + recall_spam)
+    return accuracy, precision_ham, recall_ham, precision_spam, recall_spam, f_measure_ham, f_measure_spam
 
 
 
@@ -351,7 +384,7 @@ def testing(path, mode, test_mode):
 
 
 
-filter_mode = input("Please choose running mode. 1. normal 2. Stop words filter 3. Length filter 4. Test 5. Test2")
+filter_mode = input("Please choose running mode. 1. normal 2. Stop words filter 3. Length filter 4. Test 5. Test2 6. Demo 1")
 test_mode = ""
 if filter_mode is '2':
     init_stop_word_vocabulary('English-Stop-Words.txt')
@@ -359,17 +392,33 @@ elif filter_mode == '4':
     test_mode = input("Please input the filter mode. 1. =1 2. <=5 3. <=10 4. <=15 5. <=20 \n "
                       "6. 5% 7. 10% 8. 15% 9. 20% 10. 25%")
 
-
 read_and_count('train',filter_mode)
+
 if filter_mode == '1':
     generate_file(training_ham_dict, training_spam_dict, 0.5, 'model.txt')
-    testing('test', filter_mode, test_mode)
+    res = testing('test', filter_mode, test_mode)
+    print("Accuracy: " + str(res[0]))
+    print("Ham performance:")
+    print("Recall: " + str(res[2]) + "  Precision: " + str(res[1]) + "  F-measure: " + str(res[5]))
+    print("Spam performance:")
+    print("Recall: " + str(res[4]) + "  Precision: " + str(res[3]) + "  F-measure: " + str(res[6]))
 elif filter_mode == '2':
     generate_file(training_ham_dict, training_spam_dict, 0.5, 'stopword-model.txt')
-    testing('test', filter_mode, test_mode)
+    res =testing('test', filter_mode, test_mode)
+    print("Accuracy: "+str(res[0]))
+    print("Ham performance:")
+    print("Recall: " +str(res[2]) +"  Precision: "+str(res[1]) +"  F-measure: "+str(res[5]))
+    print("Spam performance:")
+    print("Recall: " +str(res[4]) +"  Precision: "+str(res[3]) +"  F-measure: "+str(res[6]))
 elif filter_mode == '3':
     generate_file(training_ham_dict, training_spam_dict, 0.5, 'wordlength-model.txt')
-    testing('test', filter_mode, test_mode)
+    res = testing('test', filter_mode, test_mode)
+    print("Accuracy: " + str(res[0]))
+    print("Ham performance:")
+    print("Recall: " + str(res[2]) + "  Precision: " + str(res[1]) + "  F-measure: " + str(res[5]))
+    print("Spam performance:")
+    print("Recall: " + str(res[4]) + "  Precision: " + str(res[3]) + "  F-measure: " + str(res[6]))
+
 
 
 elif filter_mode == '4':
@@ -403,7 +452,7 @@ elif filter_mode == '4':
 
 
     x = [0.05,0.10,0.15,0.20,0.25]
-    for i in range(0,5):
+    for i in range(0,7):
         plt.figure(figsize=(8, 4))
         plt.title("Test Result")
         plt.xlabel("frequency drop rate%")
@@ -422,12 +471,18 @@ elif filter_mode == '4':
         elif i ==4:
             name = "2." + "Recall for SPAM"
             plt.ylabel("Recall for SPAM")
+        elif i == 5:
+            name = "1." + "F-measure for HAM"
+            plt.ylabel("F-measure for HAM")
+        elif i == 6:
+            name = "1." + "F-measure for SPAM"
+            plt.ylabel("F-measure for SPAM")
         y = [res_list[5][i],res_list[6][i],res_list[7][i],res_list[8][i],res_list[9][i]]
         plt.plot(x, y)
         plt.savefig(name+".png")
 
     x = [1,5,10,15,20]
-    for i in range(0,5):
+    for i in range(0,7):
         y = [res_list[0][i],res_list[1][i],res_list[2][i],res_list[3][i],res_list[4][i]]
         plt.figure(figsize=(8, 4))
         plt.title("Test Result")
@@ -447,6 +502,12 @@ elif filter_mode == '4':
         elif i ==4:
             name = "1." + "Recall for SPAM"
             plt.ylabel("Recall for SPAM")
+        elif i == 5:
+            name = "1." + "F-measure for HAM"
+            plt.ylabel("F-measure for HAM")
+        elif i == 6:
+            name = "1." + "F-measure for SPAM"
+            plt.ylabel("F-measure for SPAM")
         plt.plot(x, y)
         plt.savefig(name+".png")
 
@@ -472,7 +533,7 @@ elif filter_mode == '5':
 
     print(res_list)
     x = array
-    for i in range(0, 5):
+    for i in range(0, 7):
         plt.figure(figsize=(8, 4))
         plt.title("Test Result")
         plt.xlabel("Delta value (smooth)")
@@ -491,10 +552,25 @@ elif filter_mode == '5':
         elif i == 4:
             name = "3." + "Recall for SPAM"
             plt.ylabel("Recall for SPAM")
+        elif i == 5:
+            name = "3." + "F-measure for HAM"
+            plt.ylabel("F-measure for HAM")
+        elif i == 6:
+            name = "3." + "F-measure for SPAM"
+            plt.ylabel("F-measure for SPAM")
+
         y = [res_list[0][i], res_list[1][i], res_list[2][i], res_list[3][i], res_list[4][i], res_list[5][i],
              res_list[6][i], res_list[7][i], res_list[8][i], res_list[9][i], res_list[10][i]]
         plt.plot(x, y)
         plt.savefig(name + ".png")
+elif filter_mode == '6':
+    filter_condition = input("Please input the filter condition ( >=  <= =   >=&&<=)")
+    filter_value = input("Please input the filter value ( 5    5,9 )")
+    change_vocabulary_demo(filter_condition, filter_value.split(','))
+    generate_file(training_ham_dict, training_spam_dict, 0.5, 'demo-model-exp4.txt')
+    res = testing('test', filter_mode, test_mode)
+
+
 
 
 
