@@ -35,22 +35,20 @@ def change_vocabulary_demo(condition,value):
     global vocabulary
     global training_ham_dict
     global training_spam_dict
+    value = int(value)
 
-    if condition is '>=':
+
+    if condition == '1':
         for word in vocabulary:
-            if total_dict.get(word,0) >= value[0]:
+            if total_dict.get(word,0) <= value:
                 removed_vocabulary.add(word)
-    elif condition is '<=':
+    elif condition == '2':
         for word in vocabulary:
-            if total_dict.get(word,0) <= value[0]:
+            if total_dict.get(word,0) == value:
                 removed_vocabulary.add(word)
-    elif condition is '=':
+    if condition == '3':
         for word in vocabulary:
-            if total_dict.get(word,0) == value[0] :
-                removed_vocabulary.add(word)
-    if condition is '>=,<=':
-        for word in vocabulary:
-            if total_dict.get(word,0) >= value[0] and total_dict.get(word,0) <= value[1] :
+            if total_dict.get(word,0) < value:
                 removed_vocabulary.add(word)
 
     vocabulary = vocabulary - removed_vocabulary
@@ -319,6 +317,8 @@ def testing(path, mode, test_mode):
         output = open('stopword-result.txt', 'w')
     elif mode == '3':
         output = open('wordlength-result.txt', 'w')
+    elif mode == '6':
+        output = open('demo-result-exp4.txt', 'w')
     else:
         output = open('test-'+test_mode+'-result.txt', 'w')
 
@@ -384,13 +384,12 @@ def testing(path, mode, test_mode):
 
 
 
-filter_mode = input("Please choose running mode. 1. normal 2. Stop words filter 3. Length filter 4. Test 5. Test2 6. Demo 1")
+filter_mode = input("Please choose running mode. 1. normal 2. Stop words filter 3. Length filter "
+                    "4. Filtering Experiment 5. Smooth Experiment 6. Demo (filtering) 7. Demo (Smoothing)")
 test_mode = ""
 if filter_mode is '2':
     init_stop_word_vocabulary('English-Stop-Words.txt')
-elif filter_mode == '4':
-    test_mode = input("Please input the filter mode. 1. =1 2. <=5 3. <=10 4. <=15 5. <=20 \n "
-                      "6. 5% 7. 10% 8. 15% 9. 20% 10. 25%")
+
 
 read_and_count('train',filter_mode)
 
@@ -472,10 +471,10 @@ elif filter_mode == '4':
             name = "2." + "Recall for SPAM"
             plt.ylabel("Recall for SPAM")
         elif i == 5:
-            name = "1." + "F-measure for HAM"
+            name = "2." + "F-measure for HAM"
             plt.ylabel("F-measure for HAM")
         elif i == 6:
-            name = "1." + "F-measure for SPAM"
+            name = "2." + "F-measure for SPAM"
             plt.ylabel("F-measure for SPAM")
         y = [res_list[5][i],res_list[6][i],res_list[7][i],res_list[8][i],res_list[9][i]]
         plt.plot(x, y)
@@ -516,7 +515,7 @@ elif filter_mode == '5':
     origin_ham_dict = training_ham_dict.copy()
     origin_spam_dict = training_spam_dict.copy()
     res_list = list()
-    array = numpy.arange(0.0, 1.1, 0.1)
+    array = [0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
 
     for i in array:
         test_mode = str(i)
@@ -561,14 +560,21 @@ elif filter_mode == '5':
 
         y = [res_list[0][i], res_list[1][i], res_list[2][i], res_list[3][i], res_list[4][i], res_list[5][i],
              res_list[6][i], res_list[7][i], res_list[8][i], res_list[9][i], res_list[10][i]]
+
         plt.plot(x, y)
+
         plt.savefig(name + ".png")
 elif filter_mode == '6':
-    filter_condition = input("Please input the filter condition ( >=  <= =   >=&&<=)")
-    filter_value = input("Please input the filter value ( 5    5,9 )")
-    change_vocabulary_demo(filter_condition, filter_value.split(','))
+    filter_condition = input("Please input the filter condition ( 1. <= 2. = 3. <)")
+    filter_value = input("Please input the filter value ( 5 )")
+    change_vocabulary_demo(filter_condition, filter_value)
     generate_file(training_ham_dict, training_spam_dict, 0.5, 'demo-model-exp4.txt')
-    res = testing('test', filter_mode, test_mode)
+    res = testing('test', filter_mode, 'demo-model-exp4')
+elif filter_mode == '7':
+    smooth_value = input("Please input the smooth value")
+    smooth_value = float(smooth_value)
+    generate_file(training_ham_dict, training_spam_dict, smooth_value, 'demo-model-exp5.txt')
+    res = testing('test', filter_mode, 'demo-model-exp5')
 
 
 
