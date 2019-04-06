@@ -317,8 +317,8 @@ def testing(path, mode, test_mode):
         output = open('stopword-result.txt', 'w')
     elif mode == '3':
         output = open('wordlength-result.txt', 'w')
-    elif mode == '6':
-        output = open('demo-result-exp4.txt', 'w')
+    # elif mode == '6':
+    #     output = open('demo-result-exp4.txt', 'w')
     else:
         output = open('test-'+test_mode+'-result.txt', 'w')
 
