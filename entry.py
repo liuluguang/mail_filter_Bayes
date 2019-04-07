@@ -144,15 +144,20 @@ def generate_file(ham_dic, spam_dic, smooth, path):
     total_count_spam_smooth = total_count_spam + smooth * len(vocabulary)
     i = 1
     for word in sorted(vocabulary):
+
+        word_in_ham_nosmooth = ham_dic.get(word, 0)
+        word_in_spam_nosmooth = spam_dic.get(word, 0)
         word_in_ham_smooth = ham_dic.get(word,0) + smooth
         word_in_spam_smooth = spam_dic.get(word, 0) + smooth
+
+
         word_prob_ham = word_in_ham_smooth/total_count_ham_smooth
         word_prob_spam = word_in_spam_smooth/total_count_spam_smooth
 
 
-        line = str(i) + "  "+ word +"  " + str(word_in_ham_smooth) + "  " \
+        line = str(i) + "  "+ word +"  " + str(word_in_ham_nosmooth) + "  " \
                + str(word_prob_ham) + "  "\
-               + str(word_in_spam_smooth) + "  "+str(word_prob_spam) +'\n'
+               + str(word_in_spam_nosmooth) + "  "+str(word_prob_spam) +'\n'
         w = Word(word, word_in_ham_smooth, word_prob_ham,
                  word_in_spam_smooth, word_prob_spam)
         lines.append(line)
@@ -312,15 +317,17 @@ def testing(path, mode, test_mode):
     files = os.listdir(path)
     i = 1
     if mode == '1':
-        output = open('baseline-result.txt', 'w')
+        output = open('res/baseline-result.txt', 'w')
     elif mode == '2':
-        output = open('stopword-result.txt', 'w')
+        output = open('res/stopword-result.txt', 'w')
     elif mode == '3':
-        output = open('wordlength-result.txt', 'w')
-    # elif mode == '6':
-    #     output = open('demo-result-exp4.txt', 'w')
+        output = open('res/wordlength-result.txt', 'w')
+    elif mode == '6':
+        output = open('demo-res/demo-result-exp4.txt', 'w')
+    elif mode == '7':
+        output = open('demo-res/demo-result-exp5.txt', 'w')
     else:
-        output = open('test-'+test_mode+'-result.txt', 'w')
+        output = open('exp-res/test-'+test_mode+'-result.txt', 'w')
 
     for file in files:
         f_type = file.split('-')[1]
@@ -394,7 +401,7 @@ if filter_mode is '2':
 read_and_count('train',filter_mode)
 
 if filter_mode == '1':
-    generate_file(training_ham_dict, training_spam_dict, 0.5, 'model.txt')
+    generate_file(training_ham_dict, training_spam_dict, 0.5, 'res/baseline-model.txt')
     res = testing('test', filter_mode, test_mode)
     print("Accuracy: " + str(res[0]))
     print("Ham performance:")
@@ -402,7 +409,7 @@ if filter_mode == '1':
     print("Spam performance:")
     print("Recall: " + str(res[4]) + "  Precision: " + str(res[3]) + "  F-measure: " + str(res[6]))
 elif filter_mode == '2':
-    generate_file(training_ham_dict, training_spam_dict, 0.5, 'stopword-model.txt')
+    generate_file(training_ham_dict, training_spam_dict, 0.5, 'res/stopword-model.txt')
     res =testing('test', filter_mode, test_mode)
     print("Accuracy: "+str(res[0]))
     print("Ham performance:")
@@ -410,7 +417,7 @@ elif filter_mode == '2':
     print("Spam performance:")
     print("Recall: " +str(res[4]) +"  Precision: "+str(res[3]) +"  F-measure: "+str(res[6]))
 elif filter_mode == '3':
-    generate_file(training_ham_dict, training_spam_dict, 0.5, 'wordlength-model.txt')
+    generate_file(training_ham_dict, training_spam_dict, 0.5, 'res/wordlength-model.txt')
     res = testing('test', filter_mode, test_mode)
     print("Accuracy: " + str(res[0]))
     print("Ham performance:")
@@ -430,7 +437,7 @@ elif filter_mode == '4':
     for i in range(1,11):
         test_mode = str(i)
         change_vocabulary(test_mode)
-        generate_file(training_ham_dict, training_spam_dict, 0.5, 'test-'+test_mode+'-model.txt')
+        generate_file(training_ham_dict, training_spam_dict, 0.5, 'exp-res/test-'+test_mode+'-model.txt')
         res = testing('test', filter_mode, test_mode)
         res_list.append(res)
         #recover
@@ -442,16 +449,23 @@ elif filter_mode == '4':
         training_ham_dict = origin_ham_dict.copy()
 
 
-        #recover
-    for result in res_list:
-        print("Result: ")
-        for item in result:
-            print(item)
 
+        #recover
+
+
+    for i in range(0,len(res_list)):
+        print(i+1)
+        res = res_list[i]
+        print("Accuracy: " + str(res[0]))
+        print("Ham performance:")
+        print("Recall: " + str(res[2]) + "  Precision: " + str(res[1]) + "  F-measure: " + str(res[5]))
+        print("Spam performance:")
+        print("Recall: " + str(res[4]) + "  Precision: " + str(res[3]) + "  F-measure: " + str(res[6]))
 
 
     x = [0.05,0.10,0.15,0.20,0.25]
     for i in range(0,7):
+
         plt.figure(figsize=(8, 4))
         plt.title("Test Result")
         plt.xlabel("frequency drop rate%")
@@ -478,7 +492,7 @@ elif filter_mode == '4':
             plt.ylabel("F-measure for SPAM")
         y = [res_list[5][i],res_list[6][i],res_list[7][i],res_list[8][i],res_list[9][i]]
         plt.plot(x, y)
-        plt.savefig(name+".png")
+        plt.savefig("pic/"+name+".png")
 
     x = [1,5,10,15,20]
     for i in range(0,7):
@@ -508,7 +522,7 @@ elif filter_mode == '4':
             name = "1." + "F-measure for SPAM"
             plt.ylabel("F-measure for SPAM")
         plt.plot(x, y)
-        plt.savefig(name+".png")
+        plt.savefig("pic/"+name+".png")
 
 elif filter_mode == '5':
     origin_vocabulary = vocabulary.copy()
@@ -519,7 +533,7 @@ elif filter_mode == '5':
 
     for i in array:
         test_mode = str(i)
-        generate_file(training_ham_dict, training_spam_dict, i, 'test-'+test_mode+'-model.txt')
+        generate_file(training_ham_dict, training_spam_dict, i, 'exp-res/test-'+test_mode+'-model.txt')
         res = testing('test', filter_mode, test_mode)
         res_list.append(res)
         #recover
@@ -528,9 +542,17 @@ elif filter_mode == '5':
         removed_vocabulary.clear()
         training_spam_dict = origin_spam_dict.copy()
         training_ham_dict = origin_ham_dict.copy()
+
         #recover
 
-    print(res_list)
+    for i in range(0,len(res_list)):
+        print(i+1)
+        res = res_list[i]
+        print("Accuracy: " + str(res[0]))
+        print("Ham performance:")
+        print("Recall: " + str(res[2]) + "  Precision: " + str(res[1]) + "  F-measure: " + str(res[5]))
+        print("Spam performance:")
+        print("Recall: " + str(res[4]) + "  Precision: " + str(res[3]) + "  F-measure: " + str(res[6]))
     x = array
     for i in range(0, 7):
         plt.figure(figsize=(8, 4))
@@ -563,17 +585,17 @@ elif filter_mode == '5':
 
         plt.plot(x, y)
 
-        plt.savefig(name + ".png")
+        plt.savefig("pic/"+name + ".png")
 elif filter_mode == '6':
     filter_condition = input("Please input the filter condition ( 1. <= 2. = 3. <)")
     filter_value = input("Please input the filter value ( 5 )")
     change_vocabulary_demo(filter_condition, filter_value)
-    generate_file(training_ham_dict, training_spam_dict, 0.5, 'demo-model-exp4.txt')
+    generate_file(training_ham_dict, training_spam_dict, 0.5, 'demo-res/demo-model-exp4.txt')
     res = testing('test', filter_mode, 'demo-model-exp4')
 elif filter_mode == '7':
     smooth_value = input("Please input the smooth value")
     smooth_value = float(smooth_value)
-    generate_file(training_ham_dict, training_spam_dict, smooth_value, 'demo-model-exp5.txt')
+    generate_file(training_ham_dict, training_spam_dict, smooth_value, 'demo-res/demo-model-exp5.txt')
     res = testing('test', filter_mode, 'demo-model-exp5')
 
 
